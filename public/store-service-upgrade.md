@@ -13,8 +13,8 @@ All the work in this milestone is already in progress and near completion.
 
 ### Functionality
 
-1. Messages can be retrieved from store using their hashes | (Prod)
-2. Store nodes can be synchronised with each other | (Prod)
+1. Messages can be retrieved from store using their hashes | (production)
+2. Store nodes can be synchronised with each other | (production)
 3. Service nodes are DoS protected using request rate limitation
 4. PostgreSQL database growth is capped and pruning automated
 5. A tool to compare the messages across fleet nodes is deployed
