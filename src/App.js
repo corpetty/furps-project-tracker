@@ -1,23 +1,39 @@
-import logo from './logo.svg';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { marked } from 'marked';
+import FURPSMatrix from './components/FURPSMatrix';
+import MilestoneDetails from './components/MilestoneDetails';
 import './App.css';
 
 function App() {
+  const [milestones, setMilestones] = useState([]);
+  const [selectedMilestone, setSelectedMilestone] = useState(null);
+
+  useEffect(() => {
+    // In a real app, you'd fetch this data from an API
+    const fetchMilestones = async () => {
+      try {
+        const response = await axios.get('/api/milestones');
+        setMilestones(response.data);
+      } catch (error) {
+        console.error('Error fetching milestones:', error);
+      }
+    };
+
+    fetchMilestones();
+  }, []);
+
+  const handleSquareClick = (furpsCategory, stage, milestone) => {
+    setSelectedMilestone(milestone);
+  };
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <h1>FURPS Project Tracker</h1>
+      <FURPSMatrix milestones={milestones} onSquareClick={handleSquareClick} />
+      {selectedMilestone && (
+        <MilestoneDetails milestone={selectedMilestone} />
+      )}
     </div>
   );
 }
