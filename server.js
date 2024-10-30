@@ -14,7 +14,11 @@ const db = new sqlite3.Database('./furps.db', (err) => {
 });
 
 app.get('/api/furps_items', (req, res) => {
-  db.all("SELECT * FROM furps_items", [], (err, rows) => {
+  db.all(`
+    SELECT f.*, m.title as milestone_title 
+    FROM furps_items f 
+    LEFT JOIN milestones m ON f.milestone_id = m.id
+  `, [], (err, rows) => {
     if (err) {
       res.status(500).json({ error: err.message });
       return;

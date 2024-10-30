@@ -1,7 +1,7 @@
 import sqlite3
 
 # Connect to the database
-conn = sqlite3.connect('furps_database.db')
+conn = sqlite3.connect('furps.db')
 
 # Create a cursor object
 cursor = conn.cursor()

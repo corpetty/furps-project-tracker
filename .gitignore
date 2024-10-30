@@ -23,4 +23,4 @@ yarn-debug.log*
 yarn-error.log*
 
 # python virtual environment
-.nix-venv
+venv
