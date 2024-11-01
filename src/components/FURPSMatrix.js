@@ -1,147 +1,170 @@
 import React, { useState } from 'react';
-import './FURPSMatrix.css';
-import Modal from './Modal';
+import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
+import { ChevronRight, Info } from 'lucide-react';
 
-function FURPSMatrix({ milestones, furps, onSquareClick }) {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedContent, setSelectedContent] = useState(null);
-  const [highlightedFurps, setHighlightedFurps] = useState([]);
-  const [activeMilestone, setActiveMilestone] = useState(null);
+const FurpsProgressionMatrix = ({ milestones = [], furps = [], onSquareClick }) => {
+  const [selectedTile, setSelectedTile] = useState(null);
 
-  // Define FURPS categories and stages
-  const furpsCategories = ['Functionality', 'Usability', 'Reliability', 'Performance', 'Supportability'];
-  const stages = ['Research', 'MVP', 'Private Testnet', 'Public Testnet', 'Production'];
+  const stages = [
+    { id: 'research', name: 'Research' },
+    { id: 'mvp', name: 'MVP' },
+    { id: 'private_testnet', name: 'Private Testnet' },
+    { id: 'public_testnet', name: 'Public Testnet' },
+    { id: 'production', name: 'Production' }
+  ];
 
-  const handleSquareClick = (category, stage) => {
-    const matchingFurps = furps.filter(
-      f => f.category.toLowerCase() === category.toLowerCase() && 
+  const categories = [
+    { id: 'functionality', name: 'Functionality' },
+    { id: 'usability', name: 'Usability' },
+    { id: 'reliability', name: 'Reliability' },
+    { id: 'performance', name: 'Performance' },
+    { id: 'supportability', name: 'Supportability' }
+  ];
+
+  // Calculate the current stage for each category based on FURPS items
+  const getCurrentStage = (category) => {
+    const categoryFurps = furps.filter(f => 
+      f.category.toLowerCase() === category.toLowerCase()
+    );
+    
+    if (categoryFurps.length === 0) return 'research';
+    
+    const stageIds = stages.map(s => s.id);
+    let maxStageIndex = 0;
+    
+    categoryFurps.forEach(furp => {
+      const stageIndex = stageIds.indexOf(furp.stage.toLowerCase());
+      if (stageIndex > maxStageIndex) {
+        maxStageIndex = stageIndex;
+      }
+    });
+    
+    return stageIds[maxStageIndex];
+  };
+
+  // Get FURPS items for a specific category and stage
+  const getFurpsForTile = (category, stage) => {
+    return furps.filter(f => 
+      f.category.toLowerCase() === category.toLowerCase() && 
       f.stage.toLowerCase() === stage.toLowerCase()
     );
-    
-    if (matchingFurps.length > 0) {
-      setSelectedContent({
-        category,
-        stage,
-        descriptions: matchingFurps.map(f => f.description),
-        furps: matchingFurps // Add the full FURPS objects
-      });
-      setModalOpen(true);
+  };
+
+  const getTileState = (category, stage) => {
+    const currentStage = getCurrentStage(category);
+    const stageIndex = stages.findIndex(s => s.id === stage.toLowerCase());
+    const currentStageIndex = stages.findIndex(s => s.id === currentStage);
+
+    if (stageIndex === currentStageIndex) return 'current';
+    if (stageIndex < currentStageIndex) return 'completed';
+    return 'future';
+  };
+
+  const getTileColor = (state) => {
+    switch (state) {
+      case 'current':
+        return 'bg-blue-100 border-blue-500';
+      case 'completed':
+        return 'bg-green-50 border-green-500';
+      default:
+        return 'bg-gray-50 border-gray-200';
     }
+  };
+
+  const handleTileClick = (category, stage) => {
+    const newSelectedTile = `${category}-${stage}`;
+    setSelectedTile(selectedTile === newSelectedTile ? null : newSelectedTile);
     
     if (onSquareClick) {
-      onSquareClick(category, stage);
+      const tileFurps = getFurpsForTile(category, stage);
+      onSquareClick(category, stage, tileFurps);
     }
-  };
-
-  const handleMilestoneClick = (milestone, index) => {
-    if (activeMilestone === index) {
-      // If clicking the active milestone, clear the highlighting
-      setActiveMilestone(null);
-      setHighlightedFurps([]);
-    } else {
-      // Set the new active milestone and highlight its FURPS
-      setActiveMilestone(index);
-      const associatedFurps = furps.filter(furp => 
-        furp.milestone_id === milestone.id
-      );
-      setHighlightedFurps(associatedFurps);
-    }
-  };
-
-  const isFurpHighlighted = (furp) => {
-    return highlightedFurps.some(highlighted => 
-      highlighted.id === furp.id
-    );
   };
 
   return (
-    <>
-      <div className="furps-matrix">
-        {/* Render the stages row */}
-        <div className="matrix-row header-row">
-          <div className="matrix-cell header-cell"></div>
-          {stages.map((stage) => (
-            <div key={stage} className="matrix-cell header-cell">
-              {stage}
-            </div>
-          ))}
-        </div>
-
-        {/* Render the matrix rows */}
-        {furpsCategories.map((category) => (
-          <div key={category} className="matrix-row">
-            <div className="matrix-cell header-cell">{category}</div>
-            {stages.map((stage) => {
-              const cellFurps = furps.filter(f => 
-                f.category.toLowerCase() === category.toLowerCase() && 
-                f.stage.toLowerCase() === stage.toLowerCase()
-              );
-              
-              return (
-                <div
-                  key={`${category}-${stage}`}
-                  className="matrix-cell"
-                  onClick={() => handleSquareClick(category, stage)}
-                >
-                  {cellFurps.length > 0 && (
-                    <ul className="furp-list">
-                      {cellFurps.map((furp, index) => (
-                        <li 
-                          key={index} 
-                          className={`furp-content ${isFurpHighlighted(furp) ? 'highlighted' : ''}`}
+    <Card className="w-full max-w-6xl">
+      <CardHeader>
+        <CardTitle>FURPS+ Progress Matrix</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className="p-4 border-b-2 text-left w-32">Category</th>
+                {stages.map(stage => (
+                  <th key={stage.id} className="p-4 border-b-2 text-center w-40">
+                    {stage.name}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {categories.map(category => (
+                <tr key={category.id}>
+                  <td className="p-4 border-b font-medium">{category.name}</td>
+                  {stages.map(stage => {
+                    const state = getTileState(category.id, stage.id);
+                    const tileFurps = getFurpsForTile(category.id, stage.id);
+                    
+                    return (
+                      <td key={stage.id} className="p-2 border-b">
+                        <div
+                          className={`relative h-24 p-2 border-2 rounded-lg cursor-pointer transition-colors
+                            ${getTileColor(state)}
+                            ${selectedTile === `${category.id}-${stage.id}` ? 'ring-2 ring-blue-400' : ''}
+                          `}
+                          onClick={() => handleTileClick(category.id, stage.id)}
                         >
-                          {furp.description}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ))}
-      </div>
+                          {tileFurps.length > 0 && (
+                            <div className="absolute top-2 right-2">
+                              <Info size={16} className="text-gray-500" />
+                            </div>
+                          )}
+                          
+                          {state === 'current' && (
+                            <div className="absolute bottom-2 right-2">
+                              <ChevronRight size={16} className="text-blue-500" />
+                            </div>
+                          )}
 
-      {/* Render milestone titles */}
-      {milestones && milestones.length > 0 && (
-        <div className="milestone-section">
-          <h3 className="milestone-header">Milestones</h3>
-          <div className="milestone-list">
-            {milestones.map((milestone, index) => (
-              <div 
-                key={index} 
-                className={`milestone-item ${activeMilestone === index ? 'active' : ''}`}
-                onClick={() => handleMilestoneClick(milestone, index)}
-              >
-                {milestone.title}
-              </div>
-            ))}
+                          {selectedTile === `${category.id}-${stage.id}` && tileFurps.length > 0 && (
+                            <div className="absolute z-10 top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border p-3">
+                              <div className="font-medium mb-2">FURPS Items</div>
+                              {tileFurps.map((furp, index) => (
+                                <div key={index} className="mb-2 last:mb-0">
+                                  <div className="text-sm">{furp.description}</div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-6 flex gap-6 justify-end">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-green-50 border-2 border-green-500 rounded" />
+            <span className="text-sm">Completed</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-blue-100 border-2 border-blue-500 rounded" />
+            <span className="text-sm">Current Stage</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-gray-50 border-2 border-gray-200 rounded" />
+            <span className="text-sm">Future Stage</span>
           </div>
         </div>
-      )}
-
-      <Modal 
-        isOpen={modalOpen} 
-        onClose={() => setModalOpen(false)}
-      >
-        {selectedContent && (
-          <div className="modal-furp-content">
-            <h2>{selectedContent.category} - {selectedContent.stage}</h2>
-            <ul className="modal-furp-list">
-              {selectedContent.descriptions.map((description, index) => (
-                <li 
-                  key={index}
-                  className={selectedContent.furps[index] && isFurpHighlighted(selectedContent.furps[index]) ? 'highlighted' : ''}
-                >
-                  {description}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </Modal>
-    </>
+      </CardContent>
+    </Card>
   );
-}
+};
 
-export default FURPSMatrix;
+export default FurpsProgressionMatrix;

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { marked } from 'marked';
 import FURPSMatrix from './components/FURPSMatrix';
 import MilestoneDetails from './components/MilestoneDetails';
 import './App.css';
@@ -36,23 +35,31 @@ function App() {
     fetchFurps();
   }, []);
 
-  const handleSquareClick = (furpsCategory, stage, milestone) => {
-    setSelectedMilestone(milestone);
+  const handleSquareClick = (furpsCategory, stage, furpsItems) => {
+    // Find milestone associated with these FURPS items
+    const relevantMilestone = milestones.find(milestone =>
+      milestone.furps_items?.some(item =>
+        furpsItems.some(furp => furp.id === item.id)
+      )
+    );
+    setSelectedMilestone(relevantMilestone);
   };
 
-  console.log('Current furps state:', furps); // Add this line for debugging
-
   return (
-    <div className="App">
-      <h1>FURPS Project Tracker</h1>
-      <FURPSMatrix 
-        milestones={milestones} 
-        furps={furps} 
-        onSquareClick={handleSquareClick} 
-      />
-      {selectedMilestone && (
-        <MilestoneDetails milestone={selectedMilestone} />
-      )}
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        <h1 className="text-3xl font-bold text-gray-900">FURPS Project Tracker</h1>
+        <FURPSMatrix 
+          milestones={milestones} 
+          furps={furps} 
+          onSquareClick={handleSquareClick} 
+        />
+        {selectedMilestone && (
+          <div className="mt-8">
+            <MilestoneDetails milestone={selectedMilestone} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

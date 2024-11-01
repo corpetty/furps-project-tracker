@@ -1,10 +1,1 @@
-.App {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  font-family: Arial, sans-serif;
-}
-
-h1 {
-  text-align: center;
-}
+/* Any custom styles that can't be handled by Tailwind can go here */
